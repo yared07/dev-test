@@ -1,30 +1,30 @@
-interface SSEClient {
-  id: string;
-  response: {
-    write: (data: string) => void;
-    writeHead?: (status: number, headers: Record<string, string>) => void;
-    end: () => void;
-    on: (event: string, callback: (data?: unknown) => void) => void;
-  };
-  connectedAt: Date;
-}
+/**
+ * Server-Sent Events (SSE) Manager
+ *
+ * A singleton class that manages SSE client connections, handles broadcasting,
+ * and maintains heartbeat functionality to keep connections alive.
+ *
+ * Usage:
+ * - SSEManager.getInstance().addClient(clientId, response)
+ * - SSEManager.getInstance().broadcast(eventName, data)
+ * - SSEManager.getInstance().send(clientId, eventName, data)
+ */
 
-interface SSEEvent {
-  event: string;
-  data: Record<string, unknown>;
-  id?: string;
-}
+import type { SSEClient, SSEEvent } from "@/types/sse";
+import { SSE_CONFIG } from "@/config/sse";
 
 class SSEManager {
   private static instance: SSEManager;
   private clients = new Map<string, SSEClient>();
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private readonly HEARTBEAT_INTERVAL = 30000;
 
   private constructor() {
     this.startHeartbeat();
   }
 
+  /**
+   * Get the singleton instance of SSEManager
+   */
   public static getInstance(): SSEManager {
     if (!SSEManager.instance) {
       SSEManager.instance = new SSEManager();
@@ -32,13 +32,20 @@ class SSEManager {
     return SSEManager.instance;
   }
 
+  /**
+   * Add a new SSE client connection
+   * @param clientId - Unique identifier for the client
+   * @param response - Custom response object with write/end/on methods
+   */
   public addClient(clientId: string, response: SSEClient["response"]): void {
+    // Send initial connection message
     this.sendSSEMessage(response, {
       event: "connected",
       data: { clientId, timestamp: new Date().toISOString() },
       id: clientId,
     });
 
+    // Store client
     this.clients.set(clientId, {
       id: clientId,
       response,
@@ -49,11 +56,16 @@ class SSEManager {
       `SSE Client connected: ${clientId} (Total clients: ${this.clients.size})`,
     );
 
+    // Handle client disconnect
     response.on("close", () => {
       this.removeClient(clientId);
     });
   }
 
+  /**
+   * Remove a client connection
+   * @param clientId - Unique identifier for the client
+   */
   public removeClient(clientId: string): void {
     const client = this.clients.get(clientId);
     if (client) {
@@ -69,6 +81,11 @@ class SSEManager {
     }
   }
 
+  /**
+   * Broadcast an event to all connected clients
+   * @param eventName - Name of the event
+   * @param data - Event payload
+   */
   public broadcast(eventName: string, data: Record<string, unknown>): void {
     const event: SSEEvent = {
       event: eventName,
@@ -90,6 +107,12 @@ class SSEManager {
     );
   }
 
+  /**
+   * Send an event to a specific client
+   * @param clientId - Target client ID
+   * @param eventName - Name of the event
+   * @param data - Event payload
+   */
   public send(
     clientId: string,
     eventName: string,
@@ -118,35 +141,49 @@ class SSEManager {
     }
   }
 
+  /**
+   * Get all connected client IDs
+   */
   public getConnectedClients(): string[] {
     return Array.from(this.clients.keys());
   }
 
+  /**
+   * Get the number of connected clients
+   */
   public getClientCount(): number {
     return this.clients.size;
   }
 
+  /**
+   * Start heartbeat to keep connections alive
+   */
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(() => {
       this.clients.forEach((client, clientId) => {
         try {
+          // Send a comment to keep the connection alive
           client.response.write(": heartbeat\n\n");
         } catch (error) {
           console.error(`Heartbeat error for client ${clientId}:`, error);
           this.removeClient(clientId);
         }
       });
-    }, this.HEARTBEAT_INTERVAL);
+    }, SSE_CONFIG.HEARTBEAT_INTERVAL);
 
     console.log("SSE Heartbeat started");
   }
 
+  /**
+   * Stop heartbeat and cleanup resources
+   */
   public cleanup(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
     }
 
+    // Close all client connections
     this.clients.forEach((client, clientId) => {
       this.removeClient(clientId);
     });
@@ -154,6 +191,11 @@ class SSEManager {
     console.log("SSE Manager cleaned up");
   }
 
+  /**
+   * Send an SSE message to a specific response
+   * @param response - Custom response object
+   * @param event - SSE event object
+   */
   private sendSSEMessage(
     response: SSEClient["response"],
     event: SSEEvent,
@@ -162,7 +204,7 @@ class SSEManager {
       `event: ${event.event}`,
       `data: ${JSON.stringify(event.data)}`,
       event.id ? `id: ${event.id}` : "",
-      "",
+      "", // Empty line to end the message
     ]
       .filter(Boolean)
       .join("\n");

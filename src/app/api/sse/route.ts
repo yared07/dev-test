@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import SSEManager from "@/utils/SSEManager";
+import { SSE_CONFIG } from "@/config/sse";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   if (!clientId) {
     return new Response(
-      JSON.stringify({ error: "clientId parameter is required" }),
+      JSON.stringify({ error: SSE_CONFIG.ERROR_MESSAGES.CLIENT_ID_REQUIRED }),
       {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -38,13 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
     const response = new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Cache-Control",
-      },
+      headers: SSE_CONFIG.HEADERS,
     });
 
     const customResponse = {
@@ -74,7 +69,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("SSE connection error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to establish SSE connection" }),
+      JSON.stringify({ error: SSE_CONFIG.ERROR_MESSAGES.CONNECTION_FAILED }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },

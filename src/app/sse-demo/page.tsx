@@ -1,27 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-
-interface SSEEvent {
-  event: string;
-  data: Record<string, unknown>;
-  id?: string;
-}
-
-interface ConnectionStatus {
-  connected: boolean;
-  clientId: string;
-  clientCount: number;
-  connectedClients: string[];
-}
-
-interface ApiResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  clientCount?: number;
-  connectedClients?: string[];
-}
+import type { SSEEvent, ConnectionStatus, ApiResponse } from "@/types/sse";
 
 export default function SSEDemoPage() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
@@ -208,7 +188,6 @@ export default function SSEDemoPage() {
         </p>
       </div>
 
-      {/* Connection Status */}
       <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
         <h3 className="mb-2 text-2xl font-semibold">
           {connectionStatus.connected ? "🟢 Connected" : "🔴 Disconnected"}

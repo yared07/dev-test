@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import SSEManager from "@/utils/SSEManager";
+import { SSE_CONFIG } from "@/config/sse";
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Failed to broadcast event",
+        error: SSE_CONFIG.ERROR_MESSAGES.BROADCAST_FAILED,
       }),
       {
         status: 500,
@@ -61,7 +62,7 @@ export async function GET() {
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Failed to get SSE status",
+        error: SSE_CONFIG.ERROR_MESSAGES.STATUS_FAILED,
       }),
       {
         status: 500,
