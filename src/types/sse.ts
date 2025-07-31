@@ -35,3 +35,19 @@ export interface ApiResponse {
   clientCount?: number;
   connectedClients?: string[];
 }
+
+// API Request/Response Types
+export interface TestBroadcastRequest {
+  message?: string;
+  targetClientId?: string;
+  eventType?: string;
+}
+
+export interface TestBroadcastResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  clientCount?: number;
+  connectedClients?: string[];
+  targetClientId?: string;
+}
