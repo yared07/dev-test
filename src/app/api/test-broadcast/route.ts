@@ -33,13 +33,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const clientCount = sseManager.getClientCount();
+      const connectedClients = sseManager.getConnectedClients();
+
+      console.log(
+        `[POST] Private message sent. Client count: ${clientCount}, Connected clients:`,
+        connectedClients,
+      );
+
       return new Response(
         JSON.stringify({
           success: true,
           message: "Private message sent successfully",
           targetClientId,
-          clientCount: sseManager.getClientCount(),
-          connectedClients: sseManager.getConnectedClients(),
+          clientCount,
+          connectedClients,
         } as TestBroadcastResponse),
         {
           status: 200,
@@ -53,12 +61,20 @@ export async function POST(request: NextRequest) {
         clientCount: sseManager.getClientCount(),
       });
 
+      const clientCount = sseManager.getClientCount();
+      const connectedClients = sseManager.getConnectedClients();
+
+      console.log(
+        `[POST] Broadcast sent. Client count: ${clientCount}, Connected clients:`,
+        connectedClients,
+      );
+
       return new Response(
         JSON.stringify({
           success: true,
           message: "Event broadcasted successfully",
-          clientCount: sseManager.getClientCount(),
-          connectedClients: sseManager.getConnectedClients(),
+          clientCount,
+          connectedClients,
         } as TestBroadcastResponse),
         {
           status: 200,
@@ -84,12 +100,19 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const sseManager = SSEManager.getInstance();
+    const clientCount = sseManager.getClientCount();
+    const connectedClients = sseManager.getConnectedClients();
+
+    console.log(
+      `[GET] Status check. Client count: ${clientCount}, Connected clients:`,
+      connectedClients,
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
-        clientCount: sseManager.getClientCount(),
-        connectedClients: sseManager.getConnectedClients(),
+        clientCount,
+        connectedClients,
       } as TestBroadcastResponse),
       {
         status: 200,

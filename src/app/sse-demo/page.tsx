@@ -29,6 +29,23 @@ export default function SSEDemoPage() {
     return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
+  const getConnectionStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/test-broadcast");
+      const result = (await response.json()) as TestBroadcastResponse;
+
+      if (result.success) {
+        setConnectionStatus((prev) => ({
+          ...prev,
+          clientCount: result.clientCount ?? 0,
+          connectedClients: result.connectedClients ?? [],
+        }));
+      }
+    } catch (error) {
+      console.error("Error getting connection status:", error);
+    }
+  }, []);
+
   const connectToSSE = useCallback(() => {
     const clientId = generateClientId();
 
@@ -44,6 +61,10 @@ export default function SSEDemoPage() {
           clientId,
         }));
         setError(null);
+
+        setTimeout(() => {
+          void getConnectionStatus();
+        }, 100);
       };
 
       eventSource.onmessage = (event: MessageEvent) => {
@@ -76,6 +97,10 @@ export default function SSEDemoPage() {
             connected: true,
             clientId: String(data.clientId),
           }));
+
+          setTimeout(() => {
+            void getConnectionStatus();
+          }, 100);
         } catch (error) {
           console.error("Error parsing connected event:", error);
         }
@@ -129,7 +154,7 @@ export default function SSEDemoPage() {
       console.error("Error creating EventSource:", error);
       setError("Failed to connect to SSE");
     }
-  }, [generateClientId]);
+  }, [generateClientId, getConnectionStatus]);
 
   const disconnectFromSSE = useCallback(() => {
     if (eventSourceRef.current) {
@@ -182,29 +207,12 @@ export default function SSEDemoPage() {
     [],
   );
 
-  const getConnectionStatus = useCallback(async () => {
-    try {
-      const response = await fetch("/api/test-broadcast");
-      const result = (await response.json()) as TestBroadcastResponse;
-
-      if (result.success) {
-        setConnectionStatus((prev) => ({
-          ...prev,
-          clientCount: result.clientCount ?? 0,
-          connectedClients: result.connectedClients ?? [],
-        }));
-      }
-    } catch (error) {
-      console.error("Error getting connection status:", error);
-    }
-  }, []);
-
   useEffect(() => {
     connectToSSE();
 
     const statusInterval = setInterval(() => {
       void getConnectionStatus();
-    }, 5000);
+    }, 3000);
 
     return () => {
       disconnectFromSSE();
