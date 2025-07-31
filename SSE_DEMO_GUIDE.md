@@ -39,7 +39,7 @@ sseManager.send("client-123", "private-message", {
 
 ### Getting Connection Status
 
-### Loom: https://www.loom.com/share/181934c44065432e81f2aabf208c4c18
+### Loom: https://www.loom.com/share/1f33ac421a674b93a0731860a42ee7ca
 
 ```typescript
 // Get number of connected clients
