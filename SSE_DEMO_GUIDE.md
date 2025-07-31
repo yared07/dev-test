@@ -39,6 +39,8 @@ sseManager.send("client-123", "private-message", {
 
 ### Getting Connection Status
 
+### Loom: https://www.loom.com/share/181934c44065432e81f2aabf208c4c18
+
 ```typescript
 // Get number of connected clients
 const clientCount = sseManager.getClientCount();

@@ -29,7 +29,7 @@ export default function SSEDemoPage() {
     return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
-  const getConnectionStatus = useCallback(async () => {
+  const updateConnectionStatus = useCallback(async () => {
     try {
       const response = await fetch("/api/test-broadcast");
       const result = (await response.json()) as TestBroadcastResponse;
@@ -42,7 +42,7 @@ export default function SSEDemoPage() {
         }));
       }
     } catch (error) {
-      console.error("Error getting connection status:", error);
+      console.error("Error updating connection status:", error);
     }
   }, []);
 
@@ -61,10 +61,6 @@ export default function SSEDemoPage() {
           clientId,
         }));
         setError(null);
-
-        setTimeout(() => {
-          void getConnectionStatus();
-        }, 100);
       };
 
       eventSource.onmessage = (event: MessageEvent) => {
@@ -75,9 +71,9 @@ export default function SSEDemoPage() {
             unknown
           >;
           const sseEvent: SSEEvent = {
-            event: event.type ?? "message",
+            event: event.type || "message",
             data,
-            id: event.lastEventId ?? undefined,
+            id: event.lastEventId || undefined,
           };
           setMessages((prev) => [...prev, sseEvent]);
         } catch (error) {
@@ -98,8 +94,9 @@ export default function SSEDemoPage() {
             clientId: String(data.clientId),
           }));
 
+          // Update status after connection is established
           setTimeout(() => {
-            void getConnectionStatus();
+            void updateConnectionStatus();
           }, 100);
         } catch (error) {
           console.error("Error parsing connected event:", error);
@@ -116,9 +113,12 @@ export default function SSEDemoPage() {
           const sseEvent: SSEEvent = {
             event: "test-event",
             data,
-            id: event.lastEventId ?? undefined,
+            id: event.lastEventId || undefined,
           };
           setMessages((prev) => [...prev, sseEvent]);
+
+          // Update connection status after receiving a message
+          void updateConnectionStatus();
         } catch (error) {
           console.error("Error parsing test event:", error);
         }
@@ -134,9 +134,12 @@ export default function SSEDemoPage() {
           const sseEvent: SSEEvent = {
             event: "private-message",
             data,
-            id: event.lastEventId ?? undefined,
+            id: event.lastEventId || undefined,
           };
           setMessages((prev) => [...prev, sseEvent]);
+
+          // Update connection status after receiving a message
+          void updateConnectionStatus();
         } catch (error) {
           console.error("Error parsing private message:", error);
         }
@@ -154,7 +157,7 @@ export default function SSEDemoPage() {
       console.error("Error creating EventSource:", error);
       setError("Failed to connect to SSE");
     }
-  }, [generateClientId, getConnectionStatus]);
+  }, [generateClientId, updateConnectionStatus]);
 
   const disconnectFromSSE = useCallback(() => {
     if (eventSourceRef.current) {
@@ -210,15 +213,10 @@ export default function SSEDemoPage() {
   useEffect(() => {
     connectToSSE();
 
-    const statusInterval = setInterval(() => {
-      void getConnectionStatus();
-    }, 3000);
-
     return () => {
       disconnectFromSSE();
-      clearInterval(statusInterval);
     };
-  }, [connectToSSE, disconnectFromSSE, getConnectionStatus]);
+  }, [connectToSSE, disconnectFromSSE]);
 
   return (
     <div className="container mx-auto max-w-7xl p-6">
